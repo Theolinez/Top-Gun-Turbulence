@@ -12,7 +12,7 @@ Top Gun Turbulence is a Flappy Bird based game. You are a plane that has to avoi
 # Restore dependencies
 dotnet restore
 
-# Build the project
+# Build the projectr
 dotnet build
 
 # Run the game
@@ -34,6 +34,9 @@ The game will launch and automatically load the high score from `highscore.txt`.
 - **High Scores**: Your best score is automatically saved to `highscore.txt`
 
 - **Game Over**: Collision with obstacles or enemy fire ends the game
+
+![Gameplay](rec.gif)
+![WIN](<Screenshot 2026-06-11 at 15.02.40.png>)
 
 ## AI Usage
 
