@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using Silk.NET.SDL;
 
 namespace TheAdventure;
@@ -8,229 +9,73 @@ public static class Program
     public static void Main()
     {
         var sdl = new Sdl(new SdlContext());
-
-        UInt64 framesRenderedCounter = 0;
-        var timer = new Stopwatch();
-
-        ReadOnlySpan<byte> keyboardState;
-        unsafe
-        {
-            keyboardState = new(sdl.GetKeyboardState(null), (int)KeyCode.Count);
-        }
-
-        Span<byte> mouseButtonStates = stackalloc byte[(int)MouseButton.Count];
-
         var ev = new Event();
 
-        var sdlInitResult = sdl.Init(Sdl.InitVideo | Sdl.InitAudio | Sdl.InitEvents | Sdl.InitTimer | Sdl.InitGamecontroller |
-                                     Sdl.InitJoystick);
-        if (sdlInitResult < 0)
-        {
-            throw new InvalidOperationException("Failed to initialize SDL.");
-        }
+        var sdlInitResult = sdl.Init(Sdl.InitVideo | Sdl.InitEvents | Sdl.InitTimer);
+        if (sdlInitResult < 0) throw new InvalidOperationException("Failed to initialize SDL.");
 
         IntPtr window;
-        unsafe
-        {
-            window = (IntPtr)sdl.CreateWindow(
-                "The Adventure", Sdl.WindowposUndefined, Sdl.WindowposUndefined, 800, 800,
-                (uint)WindowFlags.Resizable | (uint)WindowFlags.AllowHighdpi
-            );
-
-            if (window == IntPtr.Zero)
-            {
-                var ex = sdl.GetErrorAsException();
-                if (ex != null)
-                {
-                    throw ex;
-                }
-
-                throw new Exception("Failed to create window.");
-            }
-        }
-
         IntPtr renderer;
         unsafe
         {
+            // 1. Create the Window
+            window = (IntPtr)sdl.CreateWindow("Top Gun Turbulence", Sdl.WindowposUndefined, Sdl.WindowposUndefined, 800, 800, (uint)WindowFlags.Shown);
+            
+            // 2. Create the Renderer (This is the Graphics Card hook!)
             renderer = (IntPtr)sdl.CreateRenderer((Window*)window, -1, (uint)RendererFlags.Accelerated);
+            
+            if (renderer == IntPtr.Zero) throw new Exception("Failed to create renderer.");
             sdl.RenderSetVSync((Renderer*)renderer, 1);
         }
 
-        if (renderer == IntPtr.Zero)
-        {
-            var ex = sdl.GetErrorAsException();
-            if (ex != null)
-            {
-                throw ex;
-            }
+        // 3. Initialize Game
+        var game = new FlappyGame();
 
-            throw new Exception("Failed to create renderer.");
+        // 4. LOAD ASSETS (Must happen AFTER CreateRenderer, but BEFORE the game loop)
+        unsafe 
+        {
+            game.LoadAssets(sdl, (Renderer*)renderer);
         }
 
-        var startX = 100;
-        var startY = 100;
-        var endX = 200;
-        var endY = 200;
+        var timer = new Stopwatch();
+        timer.Start();
 
         bool quit = false;
         while (!quit)
         {
             while (sdl.PollEvent(ref ev) != 0)
             {
-                if (ev.Type == (uint)EventType.Quit)
+                if (ev.Type == (uint)EventType.Quit) quit = true;
+                
+                // Route Input to Game
+                if (ev.Type == (uint)EventType.Keydown)
                 {
-                    quit = true;
-                    break;
-                }
-
-                switch (ev.Type)
-                {
-                    case (uint)EventType.Windowevent:
-                    {
-                        switch (ev.Window.Event)
-                        {
-                            case (byte)WindowEventID.Shown:
-                            case (byte)WindowEventID.Exposed:
-                            {
-                                break;
-                            }
-                            case (byte)WindowEventID.Hidden:
-                            {
-                                break;
-                            }
-                            case (byte)WindowEventID.Moved:
-                            {
-                                break;
-                            }
-                            case (byte)WindowEventID.SizeChanged:
-                            {
-                                break;
-                            }
-                            case (byte)WindowEventID.Minimized:
-                            case (byte)WindowEventID.Maximized:
-                            case (byte)WindowEventID.Restored:
-                                break;
-                            case (byte)WindowEventID.Enter:
-                            {
-                                break;
-                            }
-                            case (byte)WindowEventID.Leave:
-                            {
-                                break;
-                            }
-                            case (byte)WindowEventID.FocusGained:
-                            {
-                                break;
-                            }
-                            case (byte)WindowEventID.FocusLost:
-                            {
-                                break;
-                            }
-                            case (byte)WindowEventID.Close:
-                            {
-                                break;
-                            }
-                            case (byte)WindowEventID.TakeFocus:
-                            {
-                                unsafe
-                                {
-                                    sdl.SetWindowInputFocus(sdl.GetWindowFromID(ev.Window.WindowID));
-                                }
-
-                                break;
-                            }
-                        }
-
-                        break;
-                    }
-
-                    case (uint)EventType.Fingermotion:
-                    {
-                        break;
-                    }
-
-                    case (uint)EventType.Mousemotion:
-                    {
-                        if (keyboardState[(byte)KeyCode.LShift] > 0)
-                        {
-                            endX = ev.Motion.X;
-                            endY = ev.Motion.Y;
-                        }
-                        else
-                        {
-                            startX = ev.Motion.X;
-                            startY = ev.Motion.Y;
-                        }
-
-                        break;
-                    }
-
-                    case (uint)EventType.Fingerdown:
-                    {
-                        mouseButtonStates[(byte)MouseButton.Primary] = 1;
-                        break;
-                    }
-                    case (uint)EventType.Mousebuttondown:
-                    {
-                        mouseButtonStates[ev.Button.Button] = 1;
-                        break;
-                    }
-
-                    case (uint)EventType.Fingerup:
-                    {
-                        mouseButtonStates[(byte)MouseButton.Primary] = 0;
-                        break;
-                    }
-
-                    case (uint)EventType.Mousebuttonup:
-                    {
-                        mouseButtonStates[ev.Button.Button] = 0;
-                        break;
-                    }
-
-                    case (uint)EventType.Mousewheel:
-                    {
-                        break;
-                    }
-
-                    case (uint)EventType.Keyup:
-                    {
-                        break;
-                    }
-
-                    case (uint)EventType.Keydown:
-                    {
-                        Console.WriteLine($"Key down: {(KeyCode)ev.Key.Keysym.Scancode}");
-                        break;
-                    }
+                    game.HandleInput((KeyCode)ev.Key.Keysym.Scancode);
                 }
             }
 
-            var elapsed = timer.Elapsed;
+            // Calculate DeltaTime for smooth movement
+            double dt = timer.Elapsed.TotalSeconds;
             timer.Restart();
 
-            // game.render(renderer, RenderEvent{ elapsed, framesRenderedCounter++ });
+            // Run the game update step
+            game.UpdateAsync(dt).GetAwaiter().GetResult();
+
+            // Render the frame
             unsafe
             {
-                var r = (Renderer *)renderer;
-
-                sdl.SetRenderDrawColor(r, 255, 255, 255, 255);
-                sdl.RenderClear(r);
-
-                sdl.SetRenderDrawColor(r, 255, 0, 0, 255);
-                sdl.RenderDrawLine(r, startX, startY, endX, endY);
-
+                var r = (Renderer*)renderer;
+                game.Render(sdl, r);
                 sdl.RenderPresent(r);
             }
-
-            ++framesRenderedCounter;
         }
 
+        // Clean up when the game closes
         unsafe
         {
+            sdl.DestroyRenderer((Renderer*)renderer);
             sdl.DestroyWindow((Window*)window);
         }
-
         sdl.Quit();
     }
 }
