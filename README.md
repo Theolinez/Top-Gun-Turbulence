@@ -12,7 +12,7 @@ Top Gun Turbulence is a Flappy Bird based game. You are a plane that has to avoi
 # Restore dependencies
 dotnet restore
 
-# Build the projectr
+# Build the project
 dotnet build
 
 # Run the game
@@ -25,9 +25,9 @@ The game will launch and automatically load the high score from `highscore.txt`.
 
 - **Controls**: Use the space bar
 
-- **Objective**: Survive as long as possible while avoiding obstacles and enemies
+- **Objective**: Survive as long as possible while avoiding obstacles 
 
-- **How to win**: Have a score higher than 10.
+- **How to win**: Have a score higher than 10
 
 - **Scoring**: Earn points for every cloud passed
 
@@ -41,5 +41,5 @@ The game will launch and automatically load the high score from `highscore.txt`.
 ## AI Usage
 
 * **Tools used:** Gemini (Model Version: Gemini 1.5 Pro), Copilot (Claude Haiku 4.5)
-* **How it was used:** Chat-based code suggestions, troubleshooting Silk.NET/SDL2 native pointer interop issues (specifically overcoming missing SDL macros for reading .bmp files from memory)
+* **How it was used:** Chat-based code suggestions, troubleshooting Silk.NET/SDL2 native pointer interop issues (specifically overcoming missing SDL macros for reading .bmp files from memory), recovery of lost project.
 * **Fully AI-generated regions:** * `Silk.NET/SDL2 Interop Section` (Entirely AI-generated)
